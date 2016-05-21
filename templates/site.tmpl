@@ -1,0 +1,65 @@
+hostname {{ device.hostname }}
+
+{%- for server in globals.dns %}
+nameserver {{ server }}
+{%- endfor %}
+!
+{%- for server in globals.tacacs %}
+tacacs host {{ server }}
+{%- endfor %}
+!
+ntp {{ globals.ntp }}
+!
+!
+interface Loopback0
+ description Management Interface
+ ip address {{ device.loopback }} 255.255.255.255
+ ip ospf 1 area 0
+!
+{%- for interface,ip_address,description in device.intf_ip_mapping %}
+interface {{ interface }}
+ description {{ description }} 
+ ip address {{ ip_address }} 255.255.255.254
+ ip ospf 1 network point-to-point
+ ip ospf 1 cost {{ device.pod.vars.ospf.cost }}
+ ip ospf 1 area 0
+ no shutdown
+!
+{%- endfor %}
+
+{%- if device.neighbors is defined %}
+ {%- for neighbor,attributes in device.neighbors.iteritems() %}
+interface port-channel{{ attributes['lag'] }}
+ description {{ neighbor }}
+ ip address {{ attributes['lag_ip'] }} 255.255.255.254
+ no shutdown
+!
+  {%- for member,description in attributes['lag_members'] %}
+interface {{ member }}
+ description {{ description }}
+ channel-group {{ attributes['lag'] }}
+ no shutdown
+!
+  {%- endfor %} 
+ {%- endfor %}
+{%- endif %}
+
+router bgp {{ globals.asn }}
+ neighbor IBGP peer-group
+ neighbor IBGP remote-as {{ globals.asn }}
+ neighbor IBGP update-source Loopback0
+ neighbor IBGP next-hop-self
+{%- for neighbor,description in device.ibgp.iteritems() %}
+ neighbor {{ neighbor }} peer-group IBGP
+ neighbor {{ neighbor }} description {{ description }} 
+{%- endfor %}
+{%- if device.neighbors is defined %}
+ {%- for neighbor,attributes in device.neighbors.iteritems() %}
+ neighbor {{ attributes['remote_ip'] }} remote-as {{ attributes['asn'] }}
+ neighbor {{ attributes['remote_ip'] }} description {{ neighbor }}
+ {%- endfor %}
+{%- endif %}
+!
+
+
+

@@ -1,0 +1,39 @@
+---
+globals:
+ site: site1
+ asn: 100
+ dns:
+  - 1.1.1.1
+  - 2.2.2.2
+ tacacs:
+  - 1.1.1.1
+  - 2.2.2.2
+ snmp: 3.3.3.3
+ ntp: 4.4.4.4
+
+pods:
+ pod1:
+  leaf_count: 4
+  spine_count: 2
+  interconnect_prefix: 10.0.0.0/24
+  loopback_prefix: 10.0.1.0/24
+  ospf:
+   cost: 1000
+  bgp:
+   neighbors:
+    TOR1: 
+     leaf_nodes: [1,2]
+     interfaces: [1,3]
+     lag: 1
+     asn: 65100
+    TOR2: 
+     leaf_nodes: [1,2]
+     interfaces: [5,7]
+     lag: 2 
+     asn: 65200
+
+
+
+
+
+

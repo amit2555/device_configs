@@ -1,0 +1,50 @@
+hostname site1-pod1-leaf4
+nameserver 1.1.1.1
+nameserver 2.2.2.2
+!
+tacacs host 1.1.1.1
+tacacs host 2.2.2.2
+!
+ntp 4.4.4.4
+!
+!
+interface Loopback0
+ description Management Interface
+ ip address 10.0.1.3 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet2/0
+ description leaf4 to spine1 
+ ip address 10.0.0.12 255.255.255.254
+ ip ospf 1 network point-to-point
+ ip ospf 1 cost 1000
+ ip ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet4/0
+ description leaf4 to spine2 
+ ip address 10.0.0.14 255.255.255.254
+ ip ospf 1 network point-to-point
+ ip ospf 1 cost 1000
+ ip ospf 1 area 0
+ no shutdown
+!
+
+router bgp 100
+ neighbor IBGP peer-group
+ neighbor IBGP remote-as 100
+ neighbor IBGP update-source Loopback0
+ neighbor IBGP next-hop-self
+ neighbor 10.0.1.0 peer-group IBGP
+ neighbor 10.0.1.0 description leaf1
+ neighbor 10.0.1.1 peer-group IBGP
+ neighbor 10.0.1.1 description leaf2
+ neighbor 10.0.1.2 peer-group IBGP
+ neighbor 10.0.1.2 description leaf3
+ neighbor 10.0.1.4 peer-group IBGP
+ neighbor 10.0.1.4 description spine1
+ neighbor 10.0.1.5 peer-group IBGP
+ neighbor 10.0.1.5 description spine2
+!
+
+
