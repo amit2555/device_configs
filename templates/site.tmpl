@@ -5,7 +5,7 @@ service timestamps log datetime msec
 service password-encryption
 !
 aaa new-model
-aaa authentication login TACACS group tacacs+ local
+aaa authentication login TACACS_LOGIN group tacacs+ local
 !
 username test123 privilege 15 password test123
 !
@@ -31,7 +31,7 @@ interface Loopback0
 interface {{ interface }}
  description {{ description }} 
  ip address {{ ip_address }} 255.255.255.254
- ip ospf 1 network point-to-point
+ ip ospf network point-to-point
  ip ospf 1 cost {{ device.pod.vars.ospf.cost }}
  ip ospf 1 area 0
  no shutdown
@@ -77,7 +77,7 @@ line con 0
  privilege level 15
 !
 line vty 0 4
- login authentication TACACS
+ login authentication TACACS_LOGIN
  no exec-timeout
  transport input all
  transport output none

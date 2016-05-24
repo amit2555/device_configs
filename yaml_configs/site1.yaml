@@ -26,14 +26,5 @@ pods:
      interfaces: [1,3]
      lag: 1
      asn: 65100
-    TOR2: 
-     leaf_nodes: [1,2]
-     interfaces: [5,7]
-     lag: 2 
-     asn: 65200
-
-
-
-
 
 
