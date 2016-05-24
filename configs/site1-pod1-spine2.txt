@@ -25,6 +25,38 @@ interface Loopback0
  ip address 10.0.1.5 255.255.255.255
  ip ospf 1 area 0
 !
+interface GigabitEthernet1/0
+ description spine2 to leaf1 
+ ip address 10.0.0.3 255.255.255.254
+ ip ospf network point-to-point
+ ip ospf cost 1000
+ ip ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet2/0
+ description spine2 to leaf2 
+ ip address 10.0.0.7 255.255.255.254
+ ip ospf network point-to-point
+ ip ospf cost 1000
+ ip ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet3/0
+ description spine2 to leaf3 
+ ip address 10.0.0.11 255.255.255.254
+ ip ospf network point-to-point
+ ip ospf cost 1000
+ ip ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet4/0
+ description spine2 to leaf4 
+ ip address 10.0.0.15 255.255.255.254
+ ip ospf network point-to-point
+ ip ospf cost 1000
+ ip ospf 1 area 0
+ no shutdown
+!
 
 router bgp 100
  neighbor IBGP peer-group

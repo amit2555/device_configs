@@ -64,8 +64,8 @@ class Pod_Device(object):
         ip_addresses = list()
         descriptions = list()
         for entry in cursor:
-            # Assign IP only if b_end is Spine device
-            if entry["b_end"].startswith("spine"):
+            # Assign IP only if one of ends is a Spine device
+            if entry["a_end"].startswith("spine") or entry["b_end"].startswith("spine"):
                 ip_addresses.append(entry["_id"])
                 descriptions.append(entry["description"])
         if self.device.startswith("leaf"):
