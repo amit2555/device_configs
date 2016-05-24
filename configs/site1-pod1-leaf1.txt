@@ -5,7 +5,7 @@ service timestamps log datetime msec
 service password-encryption
 !
 aaa new-model
-aaa authentication login TACACS group tacacs+ local
+aaa authentication login TACACS_LOGIN group tacacs+ local
 !
 username test123 privilege 15 password test123
 !
@@ -28,7 +28,7 @@ interface Loopback0
 interface GigabitEthernet2/0
  description leaf1 to spine1 
  ip address 10.0.0.0 255.255.255.254
- ip ospf 1 network point-to-point
+ ip ospf network point-to-point
  ip ospf 1 cost 1000
  ip ospf 1 area 0
  no shutdown
@@ -36,7 +36,7 @@ interface GigabitEthernet2/0
 interface GigabitEthernet4/0
  description leaf1 to spine2 
  ip address 10.0.0.2 255.255.255.254
- ip ospf 1 network point-to-point
+ ip ospf network point-to-point
  ip ospf 1 cost 1000
  ip ospf 1 area 0
  no shutdown
@@ -54,21 +54,6 @@ interface GigabitEthernet1/0
 interface GigabitEthernet3/0
  description leaf1 to TOR1
  channel-group 1
- no shutdown
-!
-interface port-channel2
- description TOR2
- ip address 10.0.0.252 255.255.255.254
- no shutdown
-!
-interface GigabitEthernet5/0
- description leaf1 to TOR2
- channel-group 2
- no shutdown
-!
-interface GigabitEthernet7/0
- description leaf1 to TOR2
- channel-group 2
  no shutdown
 !
 
@@ -89,8 +74,6 @@ router bgp 100
  neighbor 10.0.1.5 description spine2
  neighbor 10.0.0.255 remote-as 65100
  neighbor 10.0.0.255 description TOR1
- neighbor 10.0.0.253 remote-as 65200
- neighbor 10.0.0.253 description TOR2
 !
 !
 line con 0
@@ -98,7 +81,7 @@ line con 0
  privilege level 15
 !
 line vty 0 4
- login authentication TACACS
+ login authentication TACACS_LOGIN
  no exec-timeout
  transport input all
  transport output none
