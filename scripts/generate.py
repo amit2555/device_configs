@@ -16,7 +16,6 @@ import jinja2
 import yaml
 import netaddr
 from pymongo import MongoClient
-from pprint import pprint as pp
 from collections import defaultdict
 
 
@@ -65,8 +64,10 @@ class Pod_Device(object):
         ip_addresses = list()
         descriptions = list()
         for entry in cursor:
-            ip_addresses.append(entry['_id'])
-            descriptions.append(entry['description'])
+            # Assign IP only if b_end is Spine device
+            if entry["b_end"].startswith("spine"):
+                ip_addresses.append(entry["_id"])
+                descriptions.append(entry["description"])
         if self.device.startswith("leaf"):
             self.intf_ip_mapping = zip(leaf_uplinks,ip_addresses,descriptions)
         else:
@@ -101,7 +102,6 @@ class Pod_Device(object):
                     self.db.interconnects.update({"_id":str(ip_addresses[0])},{"_id":str(ip_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"a_end":self.device,"b_end":neighbor,"description":self.device + " to " + neighbor}, upsert=True)
                     self.db.interconnects.update({"_id":str(ip_addresses[1])},{"_id":str(ip_addresses[1]),"pod":self.pod.name,"site":self.pod.site,"a_end":neighbor,"b_end":self.device,"description":neighbor + " to " + self.device}, upsert=True)
 
-
                     lag = attributes['lag']         
                     asn = attributes['asn']         
                     lag_members = list()
@@ -117,7 +117,7 @@ class Pod_Device(object):
  
     def _allocate_loopback(self):
         loopback_addresses = list(netaddr.IPNetwork(self.pod.loopback_subnets.pop(0)))   
-        self.db.loopbacks.update({"_id":str(loopback_addresses[0])},{"_id":str(loopback_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"device_name":self.device}, upsert=True)
+        self.db.loopbacks.update({"_id":str(loopback_addresses[0])},{"_id":str(loopback_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"device_name":self.device,"family":"ios"}, upsert=True)
         return None
 
     def _assign_loopback(self):
@@ -199,7 +199,6 @@ def main():
             with open('configs/' + device_instance.hostname + '.txt','w') as f:
                 f.write(config)
 
-       
 
 if __name__ == "__main__":
     main()

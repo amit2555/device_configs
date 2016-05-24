@@ -1,49 +1,29 @@
 hostname site1-pod1-spine1
-nameserver 1.1.1.1
-nameserver 2.2.2.2
 !
-tacacs host 1.1.1.1
-tacacs host 2.2.2.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
 !
-ntp 4.4.4.4
+aaa new-model
+aaa authentication login TACACS group tacacs+ local
+!
+username test123 privilege 15 password test123
+!
+ip name-server 1.1.1.1
+ip name-server 2.2.2.2
+!
+ip domain name test.com
+!
+tacacs-server host 1.1.1.1 key SecretKey
+tacacs-server host 2.2.2.2 key SecretKey
+!
+ip ssh version 2
 !
 !
 interface Loopback0
  description Management Interface
  ip address 10.0.1.4 255.255.255.255
  ip ospf 1 area 0
-!
-interface GigabitEthernet1/0
- description spine1 to leaf1 
- ip address 10.0.0.1 255.255.255.254
- ip ospf 1 network point-to-point
- ip ospf 1 cost 1000
- ip ospf 1 area 0
- no shutdown
-!
-interface GigabitEthernet2/0
- description spine1 to leaf2 
- ip address 10.0.0.5 255.255.255.254
- ip ospf 1 network point-to-point
- ip ospf 1 cost 1000
- ip ospf 1 area 0
- no shutdown
-!
-interface GigabitEthernet3/0
- description spine1 to leaf3 
- ip address 10.0.0.9 255.255.255.254
- ip ospf 1 network point-to-point
- ip ospf 1 cost 1000
- ip ospf 1 area 0
- no shutdown
-!
-interface GigabitEthernet4/0
- description spine1 to leaf4 
- ip address 10.0.0.13 255.255.255.254
- ip ospf 1 network point-to-point
- ip ospf 1 cost 1000
- ip ospf 1 area 0
- no shutdown
 !
 
 router bgp 100
@@ -62,5 +42,16 @@ router bgp 100
  neighbor 10.0.1.5 peer-group IBGP
  neighbor 10.0.1.5 description spine2
 !
-
-
+!
+line con 0
+ logging synchronous
+ privilege level 15
+!
+line vty 0 4
+ login authentication TACACS
+ no exec-timeout
+ transport input all
+ transport output none
+!
+ntp server 4.4.4.4 source Loopback0
+!

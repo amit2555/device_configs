@@ -10,15 +10,16 @@ aaa authentication login TACACS group tacacs+ local
 username test123 privilege 15 password test123
 !
 {%- for server in globals.dns %}
-nameserver {{ server }}
+ip name-server {{ server }}
 {%- endfor %}
+!
+ip domain name test.com
 !
 {%- for server in globals.tacacs %}
 tacacs-server host {{ server }} key SecretKey
 {%- endfor %}
 !
 ip ssh version 2
-ntp server {{ globals.ntp }} source Loopback0
 !
 !
 interface Loopback0
@@ -80,4 +81,6 @@ line vty 0 4
  no exec-timeout
  transport input all
  transport output none
+!
+ntp server {{ globals.ntp }} source Loopback0
 !
