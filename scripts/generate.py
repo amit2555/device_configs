@@ -25,6 +25,7 @@ class Pod_Device(object):
         self.pod = pod
 
     def allocate_ip(self):
+        self._create_hostname()
         self._get_db_connection()
         if self.device.startswith("leaf"):
             self._allocate_interconnects()
@@ -32,7 +33,7 @@ class Pod_Device(object):
         return None
 
     def generate_configs(self):
-        self._create_hostname()
+        #self._create_hostname()
         self._assign_interconnects()
         self._assign_loopback()
 
@@ -117,7 +118,7 @@ class Pod_Device(object):
  
     def _allocate_loopback(self):
         loopback_addresses = list(netaddr.IPNetwork(self.pod.loopback_subnets.pop(0)))   
-        self.db.loopbacks.update({"_id":str(loopback_addresses[0])},{"_id":str(loopback_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"device_name":self.device,"family":"ios"}, upsert=True)
+        self.db.loopbacks.update({"_id":str(loopback_addresses[0])},{"_id":str(loopback_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"device_name":self.device,"family":"ios","hostname":self.hostname}, upsert=True)
         return None
 
     def _assign_loopback(self):

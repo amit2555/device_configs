@@ -9,6 +9,7 @@
 
 import re
 import glob
+import sys
 from pymongo import MongoClient
 from automation import tasks
 
@@ -31,10 +32,9 @@ class Pod_Device(object):
     def get_peers_from_device(self):
         conn = MongoClient("mongodb://localhost",port=27017)
         db = conn.ipam
-        query = {"device_name":self.name}
+        query = {"hostname":self.name}
 
         matching = db.loopbacks.find_one(query)
-
         if matching:
             loopback_ip = matching["_id"]
             self.peers_on_device = [ neighbor for neighbor in tasks.get_bgp_neighbors(loopback_ip) ]
@@ -55,7 +55,10 @@ def main():
         d.get_peers_from_device()
   
         # Comparing IBGP peers in config with BGP peers configured on device  
-        if len(d.peers_in_config) <= len(d.peers_from_device):
+        if len(d.peers_in_config) > 0:
+            if len(d.peers_on_device) < len(d.peers_in_config):
+                sys.exit(-1)
+        else:
             sys.exit(-1) 
             
 
