@@ -15,8 +15,13 @@ import argparse
 import jinja2
 import yaml
 import netaddr
+import logging
 from pymongo import MongoClient
 from collections import defaultdict
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class Pod_Device(object):
@@ -197,8 +202,10 @@ def main():
         for device_instance in instances:
             device_instance.generate_configs()
             config = template.render(device = device_instance, globals = globals)
+            logger.info("Config generated successfully for device {}".format(device_instance.hostname))
             with open('configs/' + device_instance.hostname + '.txt','w') as f:
                 f.write(config)
+        return None
 
 
 if __name__ == "__main__":
