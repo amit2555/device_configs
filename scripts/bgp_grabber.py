@@ -10,8 +10,13 @@
 import re
 import glob
 import sys
+import logging
 from pymongo import MongoClient
 from automation import tasks
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class Pod_Device(object):
@@ -58,6 +63,8 @@ def main():
         if len(d.peers_in_config) > 0:
             if len(d.peers_on_device) < len(d.peers_in_config):
                 sys.exit(-1)
+            else:
+                logger.info("Device {} : OK".format(device))
         else:
             sys.exit(-1) 
             
