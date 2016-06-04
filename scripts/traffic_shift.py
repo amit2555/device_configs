@@ -48,11 +48,11 @@ def shift_away(device,asn):
 
     response = tasks.apply_config(loopback_ip,commands)
 
-    if response:
-        logger.info("Traffic has been drained from device {}.".format(device))
-        return True
-    else:
+    if not response:
         return False
+
+    logger.info("Traffic has been drained from device {}.".format(device))
+    return True
 
  
 def shift_back(device,asn):
@@ -68,9 +68,9 @@ def shift_back(device,asn):
 
     response = tasks.apply_config(loopback_ip,commands)
 
-    if response:
-        logger.info("Traffic has been restored to device {}.".format(device))
-        return True
-    else:
+    if not response:
         return False
+
+    logger.info("Traffic has been restored to device {}.".format(device))
+    return True
  

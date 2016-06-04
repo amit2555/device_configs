@@ -49,7 +49,14 @@ class Pod_Device(object):
         response = shift_back(self.name,self.asn)
         return response
 
+    def apply_latest_config(self,filename):
+        with open(filename) as f:
+            commands = f.read().splitlines()
 
+        response = tasks.apply_config(self.loopback, commands)
+        if not response:
+            return False
+        return True
 
 
 def main():
@@ -62,20 +69,24 @@ def main():
     for device,filename in zip(devices,files):
         d = Pod_Device(device)
         logger.info("==================================================")
-        logger.info("Initiating shift away on device {}".format(device))
-        away_result = d.shift_traffic_away()
-        if away_result:
-            logger.info("Applying latest config to device {}".format(device))
 
-            logger.info("Initiating shift back on device {}".format(device))
+        away_result = d.shift_traffic_away()
+
+        if away_result:
+
+            deploy_result = d.apply_latest_config(filename)
+            logger.info("Config applied to device {}".format(self.name))
+
             back_result = d.shift_traffic_back()
+
             if not back_result:
                 raise TrafficShiftError("Traffic shift back failed on device {}".format(device)) 
         else:
             raise TrafficShiftError("Traffic shift away failed on device {}".format(device)) 
+
         logger.info("==================================================")
 
-        logger.info("All devices updated successfully.")
+    logger.info("All devices updated successfully.")
 
 
 if __name__ == "__main__":
