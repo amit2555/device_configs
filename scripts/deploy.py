@@ -24,6 +24,7 @@ class Pod_Device(object):
     def __init__(self,name):
         self.name = name
         self.loopback = self._get_loopback_ip()
+        self.asn = self._get_asn()
 
     def _get_loopback_ip(self):
         conn = MongoClient("mongodb://localhost",port=27017)
@@ -37,8 +38,9 @@ class Pod_Device(object):
         return loopback_ip
 
     def _get_asn(self):
-        self.asn = tasks.get_bgp_asn(self.loopback)
-
+        asn = tasks.get_bgp_asn(self.loopback)
+        return asn
+  
     def shift_traffic_away(self):
         response = shift_away(self.loopback,self.asn)
         return response
