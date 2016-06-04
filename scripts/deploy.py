@@ -42,11 +42,11 @@ class Pod_Device(object):
         return asn
   
     def shift_traffic_away(self):
-        response = shift_away(self.loopback,self.asn)
+        response = shift_away(self.name,self.asn)
         return response
 
     def shift_traffic_back(self):
-        response = shift_back(self.loopback,self.asn)
+        response = shift_back(self.name,self.asn)
         return response
 
 
