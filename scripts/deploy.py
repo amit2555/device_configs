@@ -75,7 +75,7 @@ def main():
         if away_result:
 
             deploy_result = d.apply_latest_config(filename)
-            logger.info("Config applied to device {}".format(self.name))
+            logger.info("Config applied to device {}".format(device))
 
             back_result = d.shift_traffic_back()
 
