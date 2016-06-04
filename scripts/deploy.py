@@ -1,4 +1,4 @@
-!/usr/bin/python
+#!/usr/bin/python
 
 #-------------------------------------------------------
 # Python script used to deploy configuration to devices.
