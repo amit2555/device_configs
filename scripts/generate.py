@@ -58,7 +58,7 @@ class Pod_Device(object):
        self.conn.close()
 
     def _create_hostname(self):
-        self.hostname = self.pod.site + '-' + self.pod.name + '-' + self.device
+        self.hostname = self.pod.site[0] + self.pod.site[-1] + '-' + self.pod.name + '-' + self.device
         return None
                 
     def _assign_interconnects(self):
