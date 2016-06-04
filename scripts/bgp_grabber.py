@@ -44,6 +44,7 @@ class Pod_Device(object):
             loopback_ip = matching["_id"]
             self.peers_on_device = [ neighbor for neighbor in tasks.get_bgp_neighbors(loopback_ip) ]
            
+        conn.close()
         return None 
 
 

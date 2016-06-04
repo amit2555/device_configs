@@ -4,9 +4,13 @@ service timestamps debug datetime msec
 service timestamps log datetime msec
 service password-encryption
 !
+enable secret 0 test123
 aaa new-model
 aaa authentication login TACACS_LOGIN group tacacs+ local
 !
+archive
+ path scp://amit:amit@10.1.1.50/backup/$h
+ write-memory
 username test123 privilege 15 password test123
 !
 {%- for server in globals.dns %}
@@ -55,6 +59,9 @@ interface {{ member }}
  {%- endfor %}
 {%- endif %}
 
+route-map MAINTENANCE permit 10
+ set as-path prepend last-as 3
+!
 router bgp {{ globals.asn }}
  neighbor IBGP peer-group
  neighbor IBGP remote-as {{ globals.asn }}
@@ -80,7 +87,7 @@ line vty 0 4
  login authentication TACACS_LOGIN
  no exec-timeout
  transport input all
- transport output none
+ transport output ssh
 !
 ntp server {{ globals.ntp }} source Loopback0
 !
