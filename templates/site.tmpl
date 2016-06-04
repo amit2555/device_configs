@@ -24,6 +24,7 @@ tacacs-server host {{ server }} key SecretKey
 {%- endfor %}
 !
 ip ssh version 2
+ip ssh source-interface Loopback0
 !
 !
 interface Loopback0
