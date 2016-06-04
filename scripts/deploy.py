@@ -36,12 +36,15 @@ class Pod_Device(object):
         conn.close()
         return loopback_ip
 
+    def _get_asn(self):
+        self.asn = tasks.get_bgp_asn(self.loopback)
+
     def shift_traffic_away(self):
-        response = shift_away(self.loopback)
+        response = shift_away(self.loopback,self.asn)
         return response
 
     def shift_traffic_back(self):
-        response = shift_back(self.loopback)
+        response = shift_back(self.loopback,self.asn)
         return response
 
 
