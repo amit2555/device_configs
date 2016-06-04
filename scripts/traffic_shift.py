@@ -16,58 +16,61 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def shift_away(device,asn):
+class TrafficShiftError(Exception):
+    def __init__(self, msg):
+        super(TrafficShiftError, self).__init__(msg)
+        self.message = msg
+
+
+def _get_loopback(device):
     conn = MongoClient("mongodb://localhost",port=27017)
     db = conn.ipam
     query = {"hostname":device}
 
     matching = db.loopbacks.find_one(query)
-    conn.close()
-
     if matching:
-        loopback_ip = matching["_id"]
+        ip = matching["_id"]
 
-        commands = ['router ospf 1',
-	            'max-metric router-lsa external-lsa include-stub summary-lsa'] 
+    conn.close()
+    return ip
 
-        commands.append("router bgp {}".format(asn))
-        commands.append("neighbor IBGP route-map MAINTENANCE in")
-        commands.append("neighbor IBGP route-map MAINTENANCE out")
-        commands.append("do copy running-config startup-config")
 
-        response = tasks.apply_config(loopback_ip,commands)
+def shift_away(device,asn):
+    loopback_ip = _get_loopback(device)
 
-        if response:
-            logger.info("Traffic has been drained from device {}.".format(device))
-            return True
-        else:
-            return False
+    commands = ['router ospf 1',
+                'max-metric router-lsa external-lsa include-stub summary-lsa'] 
+
+    commands.append("router bgp {}".format(asn))
+    commands.append("neighbor IBGP route-map MAINTENANCE in")
+    commands.append("neighbor IBGP route-map MAINTENANCE out")
+    commands.append("do copy running-config startup-config")
+
+    response = tasks.apply_config(loopback_ip,commands)
+
+    if response:
+        logger.info("Traffic has been drained from device {}.".format(device))
+        return True
+    else:
+        return False
 
  
 def shift_back(device,asn):
-    conn = MongoClient("mongodb://localhost",port=27017)
-    db = conn.ipam
-    query = {"hostname":device}
+    loopback_ip = _get_loopback(device)
 
-    matching = db.loopbacks.find_one(query)
-    conn.close()
+    commands = ['router ospf 1',
+                'no max-metric router-lsa'] 
 
-    if matching:
-        loopback_ip = matching["_id"]
+    commands.append("router bgp {}".format(asn))
+    commands.append("no neighbor IBGP route-map MAINTENANCE in")
+    commands.append("no neighbor IBGP route-map MAINTENANCE out")
+    commands.append("do copy running-config startup-config")
 
-        commands = ['router ospf 1',
-	            'no max-metric router-lsa'] 
+    response = tasks.apply_config(loopback_ip,commands)
 
-        commands.append("router bgp {}".format(asn))
-        commands.append("no neighbor IBGP route-map MAINTENANCE in")
-        commands.append("no neighbor IBGP route-map MAINTENANCE out")
-        commands.append("do copy running-config startup-config")
-
-        response = tasks.apply_config(loopback_ip,commands)
-
-        if response:
-            logger.info("Traffic has been restored to device {}.".format(device))
-            return True
-        else:
-            return False
+    if response:
+        logger.info("Traffic has been restored to device {}.".format(device))
+        return True
+    else:
+        return False
  

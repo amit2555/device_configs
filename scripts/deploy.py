@@ -13,7 +13,7 @@ import glob
 import logging
 from pymongo import MongoClient
 from automation import tasks
-from traffic_shift import shift_away,shift_back
+from traffic_shift import TrafficShiftError,shift_away,shift_back
 
 
 logging.basicConfig(level=logging.INFO)
@@ -61,15 +61,21 @@ def main():
 
     for device,filename in zip(devices,files):
         d = Pod_Device(device)
+        logger.info("==================================================")
         logger.info("Initiating shift away on device {}".format(device))
-        result = d.shift_traffic_away()
-        if result:
+        away_result = d.shift_traffic_away()
+        if away_result:
             logger.info("Applying latest config to device {}".format(device))
 
             logger.info("Initiating shift back on device {}".format(device))
-            result = d.shift_traffic_back()
+            back_result = d.shift_traffic_back()
+            if not back_result:
+                raise TrafficShiftError("Traffic shift back failed on device {}".format(device)) 
         else:
-            sys.exit(-1)
+            raise TrafficShiftError("Traffic shift away failed on device {}".format(device)) 
+        logger.info("==================================================")
+
+        logger.info("All devices updated successfully.")
 
 
 if __name__ == "__main__":
