@@ -8,6 +8,7 @@
 #-------------------------------------------------------
 
 import logging
+import time
 from pymongo import MongoClient
 from automation import tasks
 
@@ -28,8 +29,7 @@ def _get_loopback(device):
     query = {"hostname":device}
 
     matching = db.loopbacks.find_one(query)
-    if matching:
-        ip = matching["_id"]
+    ip = matching["_id"]
 
     conn.close()
     return ip
@@ -46,13 +46,25 @@ def shift_away(device,asn):
     commands.append("neighbor IBGP route-map MAINTENANCE out")
     commands.append("do copy running-config startup-config")
 
-    response = tasks.apply_config(loopback_ip,commands)
+    tasks.apply_config(loopback_ip,commands)
 
-    if not response:
-        return False
+    threshold = 100
+    count = 1 
+ 
+    while count <= 3:
+        time.sleep(5)
+        #Get device traffic levels
+        pps = tasks.get_device_traffic(loopback_ip)
 
-    logger.info("Traffic has been drained from device {}.".format(device))
-    return True
+        if pps > threshold:
+            logger.info("Attempt: {} - Traffic NOT drained from device {}".format(count,device))
+            count += 1
+        else:
+    	    logger.info("Traffic has been drained from device {}".format(device))
+            return True
+
+    logger.info("Failed to drain traffic from device {}".format(device))
+    return False
 
  
 def shift_back(device,asn):
@@ -71,6 +83,6 @@ def shift_back(device,asn):
     if not response:
         return False
 
-    logger.info("Traffic has been restored to device {}.".format(device))
+    logger.info("Traffic has been restored to device {}".format(device))
     return True
  
