@@ -22,6 +22,7 @@ tacacs-server host 1.1.1.1 key SecretKey
 tacacs-server host 2.2.2.2 key SecretKey
 !
 ip ssh version 2
+ip ssh source-interface Loopback0
 !
 !
 interface Loopback0
@@ -35,6 +36,7 @@ interface GigabitEthernet2/0
  ip ospf network point-to-point
  ip ospf cost 1000
  ip ospf 1 area 0
+ load-interval 30
  no shutdown
 !
 interface GigabitEthernet4/0
@@ -43,21 +45,25 @@ interface GigabitEthernet4/0
  ip ospf network point-to-point
  ip ospf cost 1000
  ip ospf 1 area 0
+ load-interval 30
  no shutdown
 !
 interface port-channel1
  description TOR1
  ip address 10.0.0.252 255.255.255.254
+ load-interval 30
  no shutdown
 !
 interface GigabitEthernet1/0
  description leaf2 to TOR1
  channel-group 1
+ load-interval 30
  no shutdown
 !
 interface GigabitEthernet3/0
  description leaf2 to TOR1
  channel-group 1
+ load-interval 30
  no shutdown
 !
 
@@ -79,7 +85,9 @@ router bgp 100
  neighbor 10.0.1.4 description spine1
  neighbor 10.0.1.5 peer-group IBGP
  neighbor 10.0.1.5 description spine2
- neighbor 10.0.0.253 remote-as 65100
+ neighbor TOR1 peer-group
+ neighbor TOR1 remote-as 65100
+ neighbor 10.0.0.253 peer-group TOR1 
  neighbor 10.0.0.253 description TOR1
 !
 !

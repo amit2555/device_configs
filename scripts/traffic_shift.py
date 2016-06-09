@@ -4,7 +4,8 @@
 # Python script used for traffic shift away and back 
 # from device.
 # The script will apply/remove max-metric on OSPF and 
-# MAINTENANCE route-map on IBGP peer-group.
+# MAINTENANCE route-map on peer-groups to external
+# neighbors.
 #-------------------------------------------------------
 
 import logging
@@ -34,22 +35,47 @@ def _get_loopback(device):
     conn.close()
     return ip
 
+def _get_commands(loopback_ip,asn,state=None):
 
-def shift_away(device,asn):
-    loopback_ip = _get_loopback(device)
+    commands = list()
+    commands = ["router ospf 1"]
 
-    commands = ['router ospf 1',
-                'max-metric router-lsa external-lsa include-stub summary-lsa'] 
+    if state == "away":
+        commands.append("max-metric router-lsa external-lsa include-stub summary-lsa")
+    elif state == "back":
+        commands.append("no max-metric router-lsa")
 
     commands.append("router bgp {}".format(asn))
-    commands.append("neighbor IBGP route-map MAINTENANCE in")
-    commands.append("neighbor IBGP route-map MAINTENANCE out")
+
+    #Get BGP peer-groups from device
+    peergroups = tasks.get_bgp_peergroups(loopback_ip)
+
+    for peergroup in peergroups:
+        if peergroup != "IBGP":
+            if state == "away":
+                commands.append("neighbor {} route-map MAINTENANCE in".format(peergroup))
+                commands.append("neighbor {} route-map MAINTENANCE out".format(peergroup))
+            elif state == "back":
+                commands.append("no neighbor {} route-map MAINTENANCE in".format(peergroup))
+                commands.append("no neighbor {} route-map MAINTENANCE out".format(peergroup))
+ 
     commands.append("do copy running-config startup-config")
+    return commands
+
+
+def shift_away(device,asn):
+    """
+    Applies max-metric to OSPF and MAINTENANCE route-map to BGP.
+    """
+
+    loopback_ip = _get_loopback(device)
+    commands = _get_commands(loopback_ip,asn,state="away")
 
     tasks.apply_config(loopback_ip,commands)
+    logger.info("Shift away config applied to device {}".format(device))
 
     threshold = 100
-    count = 1 
+    count = 1
  
     while count <= 3:
         time.sleep(5)
@@ -57,32 +83,41 @@ def shift_away(device,asn):
         pps = tasks.get_device_traffic(loopback_ip)
 
         if pps > threshold:
-            logger.info("Attempt: {} - Traffic NOT drained from device {}".format(count,device))
+            logger.info("## Attempt: {} - Traffic NOT drained from device {} ##\n".format(count,device))
             count += 1
         else:
     	    logger.info("Traffic has been drained from device {}".format(device))
             return True
 
-    logger.info("Failed to drain traffic from device {}".format(device))
+    logger.info("Traffic not drained from device {} - currently {} packets/sec".format(device,pps))
     return False
 
  
 def shift_back(device,asn):
+    """
+    Removes max-metric from OSPF and MAINTENANCE route-map from BGP.
+    """
+
     loopback_ip = _get_loopback(device)
+    commands = _get_commands(loopback_ip,asn,state="back")
 
-    commands = ['router ospf 1',
-                'no max-metric router-lsa'] 
+    tasks.apply_config(loopback_ip,commands)
+    logger.info("Shift back config applied to device {}".format(device))
 
-    commands.append("router bgp {}".format(asn))
-    commands.append("no neighbor IBGP route-map MAINTENANCE in")
-    commands.append("no neighbor IBGP route-map MAINTENANCE out")
-    commands.append("do copy running-config startup-config")
+    threshold = 100
+    count = 1
 
-    response = tasks.apply_config(loopback_ip,commands)
+    while count <= 3:
+        time.sleep(5)
+        pps = tasks.get_device_traffic(loopback_ip)
 
-    if not response:
-        return False
-
-    logger.info("Traffic has been restored to device {}".format(device))
-    return True
+        if pps < threshold:
+            logger.info("## Attempt: {} - Traffic not restored to device {} ##\n".format(count, device))
+            count += 1
+        else:
+            logger.info("Traffic restored to device {}".format(device))
+            return True
+   
+    logger.info("Traffic not restored to device {} - currently {} packets/sec".format(device,pps))
+    return False
  

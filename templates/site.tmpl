@@ -39,6 +39,7 @@ interface {{ interface }}
  ip ospf network point-to-point
  ip ospf cost {{ device.pod.vars.ospf.cost }}
  ip ospf 1 area 0
+ load-interval 30
  no shutdown
 !
 {%- endfor %}
@@ -48,12 +49,14 @@ interface {{ interface }}
 interface port-channel{{ attributes['lag'] }}
  description {{ neighbor }}
  ip address {{ attributes['lag_ip'] }} 255.255.255.254
+ load-interval 30
  no shutdown
 !
   {%- for member,description in attributes['lag_members'] %}
 interface {{ member }}
  description {{ description }}
  channel-group {{ attributes['lag'] }}
+ load-interval 30
  no shutdown
 !
   {%- endfor %} 
@@ -74,7 +77,9 @@ router bgp {{ globals.asn }}
 {%- endfor %}
 {%- if device.neighbors is defined %}
  {%- for neighbor,attributes in device.neighbors.iteritems() %}
- neighbor {{ attributes['remote_ip'] }} remote-as {{ attributes['asn'] }}
+ neighbor {{ neighbor }} peer-group
+ neighbor {{ neighbor }} remote-as {{ attributes['asn'] }}
+ neighbor {{ attributes['remote_ip'] }} peer-group {{ neighbor }} 
  neighbor {{ attributes['remote_ip'] }} description {{ neighbor }}
  {%- endfor %}
 {%- endif %}

@@ -22,6 +22,7 @@ tacacs-server host 1.1.1.1 key SecretKey
 tacacs-server host 2.2.2.2 key SecretKey
 !
 ip ssh version 2
+ip ssh source-interface Loopback0
 !
 !
 interface Loopback0
@@ -35,6 +36,7 @@ interface GigabitEthernet2/0
  ip ospf network point-to-point
  ip ospf cost 1000
  ip ospf 1 area 0
+ load-interval 30
  no shutdown
 !
 interface GigabitEthernet4/0
@@ -43,6 +45,7 @@ interface GigabitEthernet4/0
  ip ospf network point-to-point
  ip ospf cost 1000
  ip ospf 1 area 0
+ load-interval 30
  no shutdown
 !
 
