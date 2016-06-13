@@ -31,14 +31,24 @@ def loopbacks():
     return loopback_ips
 
 
-@pytest.mark.parametrize("device", loopbacks())
+@pytest.mark.parametrize("device", 
+			  loopbacks())
 def test_bgp_neighbors_configured_atleast_5(device):
     """Check BGP neighbors more than (total # of leafs+spines - 1) """
     assert len(tasks.get_bgp_neighbors(device).keys()) >= 5 
 
-@pytest.mark.parametrize("device", loopbacks())
+@pytest.mark.parametrize("device", 
+			  loopbacks())
 def test_device_traffic_more_than_threshold(device):
     """Check device is taking traffic """
+    pytest.skip("WIP")
     assert tasks.get_device_traffic(device) > 50
+
+@pytest.mark.parametrize("device", 
+			  loopbacks())
+def test_bgp_neighbors_state_is_established(device):
+    """Check all BGP neighbors are in Established state """
+    for neighbor in tasks.get_bgp_neighbors_state(device):
+        assert neighbor['state'] == 'Established'
 
 
