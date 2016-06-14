@@ -63,7 +63,7 @@ def _get_commands(loopback_ip,asn,state=None):
     return commands
 
 
-def shift_away(device,asn):
+def shift_away(device,asn,check_traffic_level=False):
     """
     Applies max-metric to OSPF and MAINTENANCE route-map to BGP.
     """
@@ -74,6 +74,9 @@ def shift_away(device,asn):
     tasks.apply_config(loopback_ip,commands)
     logger.info("Shift away config applied to device {}".format(device))
 
+    if not check_traffic_level:
+        return True
+ 
     threshold = 100
     count = 1
  
@@ -93,7 +96,7 @@ def shift_away(device,asn):
     return False
 
  
-def shift_back(device,asn):
+def shift_back(device,asn,check_traffic_level=False):
     """
     Removes max-metric from OSPF and MAINTENANCE route-map from BGP.
     """
@@ -103,6 +106,9 @@ def shift_back(device,asn):
 
     tasks.apply_config(loopback_ip,commands)
     logger.info("Shift back config applied to device {}".format(device))
+
+    if not check_traffic_level:
+        return True
 
     threshold = 100
     count = 1
