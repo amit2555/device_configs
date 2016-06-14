@@ -53,9 +53,9 @@ def test_device_traffic_more_than_threshold(device):
 @pytest.mark.parametrize("device", 
 			  loopbacks())
 def test_bgp_neighbors_state_is_established(device):
-    """Check all BGP neighbors are in Established state """
+    """Check all IBGP neighbors are in Established state """
     for neighbor in tasks.get_bgp_neighbors_state(device):
-        assert neighbor['state'] == 'Established'
+        assert neighbor['state'] == 'Established' if neighbor['peergroup'] == 'IBGP'
 
 @pytest.mark.parametrize("filename",
 			  filenames())
