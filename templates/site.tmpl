@@ -1,36 +1,91 @@
-hostname {{ device.hostname }}
-!
+upgrade fpd auto
+version {{ globals.version }}
 service timestamps debug datetime msec
 service timestamps log datetime msec
 service password-encryption
 !
+hostname {{ device.hostname }}
+!
+boot-start-marker
+boot-end-marker
+!
+!
 enable secret 0 test123
+!
 aaa new-model
+!
+!
+aaa group server tacacs+ TAC_PLUS
+{%- for server in globals.tacacs %}
+ server name host_{{ server }} 
+{%- endfor %}
+!
 aaa authentication login TACACS_LOGIN group tacacs+ local
+!
+!
+!
+!
+!
+aaa session-id common
+!
+!
+!
+!
+!
+!
+{%- for server in globals.dns %}
+ip name-server {{ server }}
+{%- endfor %}
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
 !
 archive
  path scp://amit:amit@10.1.1.50/backup/$h
  write-memory
 username test123 privilege 15 password test123
 !
-{%- for server in globals.dns %}
-ip name-server {{ server }}
-{%- endfor %}
+redundancy
 !
-ip domain name test.com
 !
-{%- for server in globals.tacacs %}
-tacacs-server host {{ server }} key SecretKey
-{%- endfor %}
-!
-ip ssh version 2
 ip ssh source-interface Loopback0
+ip ssh version 2
+! 
+!
+!
+!
+!
+!
+!
+!
 !
 !
 interface Loopback0
  description Management Interface
  ip address {{ device.loopback }} 255.255.255.255
  ip ospf 1 area 0
+!
+interface Ethernet0/0
+ no ip address
+ duplex auto
+!
+interface GigabitEthernet0/0
+ description OOB Interface
+ ip address {{ device.oob }} 255.255.255.0
+ ip ospf 1 area 0
+ load-interval 30
+ media-type gbic
+ negotiation auto
+ no shutdown
 !
 {%- for interface,ip_address,description in device.intf_ip_mapping %}
 interface {{ interface }}
@@ -40,13 +95,13 @@ interface {{ interface }}
  ip ospf cost {{ device.pod.vars.ospf.cost }}
  ip ospf 1 area 0
  load-interval 30
+ negotiation auto
  no shutdown
 !
 {%- endfor %}
-
 {%- if device.neighbors is defined %}
  {%- for neighbor,attributes in device.neighbors.iteritems() %}
-interface port-channel{{ attributes['lag'] }}
+interface Port-channel{{ attributes['lag'] }}
  description {{ neighbor }}
  ip address {{ attributes['lag_ip'] }} 255.255.255.254
  load-interval 30
@@ -57,16 +112,20 @@ interface {{ member }}
  description {{ description }}
  channel-group {{ attributes['lag'] }}
  load-interval 30
+ negotiation auto
  no shutdown
 !
   {%- endfor %} 
  {%- endfor %}
 {%- endif %}
-
-route-map MAINTENANCE permit 10
- set as-path prepend last-as 3
+!
+router ospf 1
+ log-adjacency-changes
+ max-metric router-lsa external-lsa include-stub summary-lsa
+ passive-interface GigabitEthernet0/0 
 !
 router bgp {{ globals.asn }}
+ bgp log-neighbor-changes
  neighbor IBGP peer-group
  neighbor IBGP remote-as {{ globals.asn }}
  neighbor IBGP update-source Loopback0
@@ -79,22 +138,60 @@ router bgp {{ globals.asn }}
  {%- for neighbor,attributes in device.neighbors.iteritems() %}
  neighbor {{ neighbor }} peer-group
  neighbor {{ neighbor }} remote-as {{ attributes['asn'] }}
+ neighbor {{ neighbor }} route-map MAINTENANCE in 
+ neighbor {{ neighbor }} route-map MAINTENANCE out 
  neighbor {{ attributes['remote_ip'] }} peer-group {{ neighbor }} 
  neighbor {{ attributes['remote_ip'] }} description {{ neighbor }}
  {%- endfor %}
 {%- endif %}
 !
+ip forward-protocol nd
+no ip http server
+no ip http secure-server
+!         
+!         
+!         
+!         
+route-map MAINTENANCE permit 10
+ set as-path prepend last-as 3
+!
+{%- for server in globals.tacacs %}
+tacacs server host_{{ server }}
+ address ipv4 {{server}}
+ key 0 SecretKey123
+{%- endfor %}
+!
+!
+!
+control-plane
+!
+!
+!
+mgcp profile default
+!
+!
+!
+gatekeeper
+ shutdown
+!
 !
 line con 0
+ exec-timeout 20 0
+ privilege level 15
  logging synchronous
+ stopbits 1
+line aux 0
+ exec-timeout 20 0
  privilege level 15
-!
+ logging synchronous
+ stopbits 1
 line vty 0 4
- login authentication TACACS_LOGIN
- no exec-timeout
+ exec-timeout 20 0
  privilege level 15
+ login authentication TACACS_LOGIN
  transport input all
  transport output ssh
 !
 ntp server {{ globals.ntp }} source Loopback0
 !
+end

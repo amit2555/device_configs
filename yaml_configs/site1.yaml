@@ -1,6 +1,7 @@
 ---
 globals:
  site: site1
+ version: 15.2
  asn: 100
  dns:
   - 1.1.1.1
@@ -15,10 +16,11 @@ pods:
  pod1:
   leaf_count: 4
   spine_count: 2
+  oob_prefix: 10.1.1.0/24
   interconnect_prefix: 10.0.0.0/24
   loopback_prefix: 10.0.1.0/24
   ospf:
-   cost: 1000
+   cost: 200
   bgp:
    neighbors:
     TOR1: 

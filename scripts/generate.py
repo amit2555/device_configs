@@ -35,12 +35,14 @@ class Pod_Device(object):
         if self.device.startswith("leaf"):
             self._allocate_interconnects()
         self._allocate_loopback()
+        self._allocate_oob()
         return None
 
     def generate_configs(self):
         #self._create_hostname()
         self._assign_interconnects()
         self._assign_loopback()
+        self._assign_oob()
 
         if self.device.startswith("leaf"):
             self._leaf_neighbor_interconnects()
@@ -132,6 +134,24 @@ class Pod_Device(object):
         self.loopback = loopback['_id']
         return None
 
+    def _allocate_oob(self):
+        oob_addresses = list(netaddr.IPNetwork(self.pod.oob_subnets.pop(0)))   
+        self.db.oobs.update({"_id":str(oob_addresses[0])},
+			    {"_id":str(oob_addresses[0]),
+			     "pod":self.pod.name,
+			     "site":self.pod.site,
+			     "device_name":self.device,
+			     "family":"ios",
+			     "hostname":self.hostname}, 
+			     upsert=True)
+        return None
+
+    def _assign_oob(self):
+        query = {'device_name': self.device}
+        oob = self.db.oobs.find_one(query)
+        self.oob = oob['_id']
+        return None
+
     def _get_ibgp_neighbors(self):
         self.ibgp = dict()
 
@@ -145,12 +165,14 @@ class Pod_Device(object):
 
 
 class Pod(object):
-    def __init__(self,name,loopback_prefix,interconnect_prefix):
+    def __init__(self,name,loopback_prefix,interconnect_prefix,oob_prefix):
         self.name = name
         self.loopback_prefix = loopback_prefix
         self.interconnect_prefix = interconnect_prefix
+        self.oob_prefix = oob_prefix
         self._interconnect_subnets()
         self._loopback_subnets()
+        self._oob_subnets()
 
     def _interconnect_subnets(self):
         # All /31 subnets for interconnects
@@ -160,6 +182,13 @@ class Pod(object):
         # All /32 subnets for loopback
         self.loopback_subnets = list(netaddr.IPNetwork(self.loopback_prefix).subnet(32))
 
+    def _oob_subnets(self):
+        # All /32 subnets for oob
+        self.oob_subnets = list(netaddr.IPNetwork(self.oob_prefix).subnet(32))
+        # Remove Network(first) and Broadcast(last) addresses
+        self.oob_subnets.pop(0)
+        self.oob_subnets.pop()
+        return None
 
 def parse_arguments(args):
     parser = argparse.ArgumentParser()
@@ -184,7 +213,9 @@ def main():
         leafs = [ 'leaf' + str(leaf_id) for leaf_id in range(1, pod_vars['leaf_count'] + 1) ]
         spines = [ 'spine' + str(spine_id) for spine_id in range(1, pod_vars['spine_count'] + 1) ]
         
-        pod = Pod(pod_name,pod_vars['loopback_prefix'],pod_vars['interconnect_prefix']) 
+        pod = Pod(pod_name,pod_vars['loopback_prefix'],
+			   pod_vars['interconnect_prefix'],
+			   pod_vars['oob_prefix']) 
         pod.site = globals['site']
         pod.spines = spines 
         pod.leafs = leafs         # "leafs" is deliberatly spelled this way
