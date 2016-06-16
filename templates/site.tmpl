@@ -1,3 +1,5 @@
+
+!
 upgrade fpd auto
 version {{ globals.version }}
 service timestamps debug datetime msec
@@ -27,12 +29,15 @@ aaa authentication login TACACS_LOGIN group tacacs+ local
 !
 !
 aaa session-id common
+no ip icmp rate-limit unreachable
 !
 !
 !
 !
 !
 !
+no ip domain lookup
+ip domain name test.com
 {%- for server in globals.dns %}
 ip name-server {{ server }}
 {%- endfor %}
@@ -57,6 +62,7 @@ username test123 privilege 15 password test123
 redundancy
 !
 !
+ip tcp synwait-time 5
 ip ssh source-interface Loopback0
 ip ssh version 2
 ! 
@@ -74,8 +80,19 @@ interface Loopback0
  ip address {{ device.loopback }} 255.255.255.255
  ip ospf 1 area 0
 !
+{%- if device.neighbors is defined %}
+ {%- for neighbor,attributes in device.neighbors.iteritems() %}
+interface Port-channel{{ attributes['lag'] }}
+ description {{ neighbor }}
+ ip address {{ attributes['lag_ip'] }} 255.255.255.254
+ load-interval 30
+ no shutdown
+!
+ {%- endfor %}
+{%- endif %}
 interface Ethernet0/0
  no ip address
+ shutdown
  duplex auto
 !
 interface GigabitEthernet0/0
@@ -83,6 +100,8 @@ interface GigabitEthernet0/0
  ip address {{ device.oob }} 255.255.255.0
  ip ospf 1 area 0
  load-interval 30
+ duplex full
+ speed 1000
  media-type gbic
  negotiation auto
  no shutdown
@@ -101,12 +120,6 @@ interface {{ interface }}
 {%- endfor %}
 {%- if device.neighbors is defined %}
  {%- for neighbor,attributes in device.neighbors.iteritems() %}
-interface Port-channel{{ attributes['lag'] }}
- description {{ neighbor }}
- ip address {{ attributes['lag_ip'] }} 255.255.255.254
- load-interval 30
- no shutdown
-!
   {%- for member,description in attributes['lag_members'] %}
 interface {{ member }}
  description {{ description }}
@@ -120,7 +133,6 @@ interface {{ member }}
 {%- endif %}
 !
 router ospf 1
- log-adjacency-changes
  max-metric router-lsa external-lsa include-stub summary-lsa
  passive-interface GigabitEthernet0/0 
 !
@@ -148,12 +160,15 @@ router bgp {{ globals.asn }}
 ip forward-protocol nd
 no ip http server
 no ip http secure-server
-!         
-!         
-!         
-!         
+!
+!
+!
+!
+no cdp log mismatch duplex
+!
 route-map MAINTENANCE permit 10
  set as-path prepend last-as 3
+!
 !
 {%- for server in globals.tacacs %}
 tacacs server host_{{ server }}

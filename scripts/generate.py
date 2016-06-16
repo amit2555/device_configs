@@ -64,7 +64,7 @@ class Pod_Device(object):
         return None
                 
     def _assign_interconnects(self):
-        leaf_uplinks = ['GigabitEthernet2/0','GigabitEthernet4/0','GigabitEthernet6/0','GigabitEthernet8/0']
+        leaf_uplinks = ['GigabitEthernet1/0','GigabitEthernet2/0']
         spine_downlinks = ['GigabitEthernet1/0','GigabitEthernet2/0','GigabitEthernet3/0','GigabitEthernet4/0']
         query = {"a_end": self.device}
 
@@ -95,7 +95,7 @@ class Pod_Device(object):
 
     def _leaf_neighbor_interconnects(self):
         self.neighbors = defaultdict(dict)
-        leaf_downlinks = {1:'GigabitEthernet1/0',3:'GigabitEthernet3/0',5:'GigabitEthernet5/0',7:'GigabitEthernet7/0'}
+        leaf_downlinks = {3:'GigabitEthernet3/0',4:'GigabitEthernet4/0',5:'GigabitEthernet5/0',6:'GigabitEthernet6/0'}
 
         if self.pod.vars['bgp']['neighbors']:
             for neighbor,attributes in self.pod.vars['bgp']['neighbors'].iteritems():
