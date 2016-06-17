@@ -20,12 +20,12 @@ pods:
   interconnect_prefix: 10.0.0.0/24
   loopback_prefix: 10.0.1.0/24
   ospf:
-   cost: 200
+   cost: 1000
   bgp:
    neighbors:
     TOR1: 
      leaf_nodes: [1,2]
-     interfaces: [3,4]
+     interfaces: [5,6]
      lag: 1
      asn: 65100
 

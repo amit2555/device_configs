@@ -1,4 +1,3 @@
-
 !
 upgrade fpd auto
 version {{ globals.version }}
@@ -12,15 +11,10 @@ boot-start-marker
 boot-end-marker
 !
 !
-enable secret 0 test123
+enable secret 0 test123 
 !
 aaa new-model
 !
-!
-aaa group server tacacs+ TAC_PLUS
-{%- for server in globals.tacacs %}
- server name host_{{ server }} 
-{%- endfor %}
 !
 aaa authentication login TACACS_LOGIN group tacacs+ local
 !
@@ -57,7 +51,7 @@ multilink bundle-name authenticated
 archive
  path scp://amit:amit@10.1.1.50/backup/$h
  write-memory
-username test123 privilege 15 password test123
+username test123 privilege 15 password 0 test123 
 !
 redundancy
 !
@@ -171,9 +165,7 @@ route-map MAINTENANCE permit 10
 !
 !
 {%- for server in globals.tacacs %}
-tacacs server host_{{ server }}
- address ipv4 {{server}}
- key 0 SecretKey123
+tacacs-server host {{ server }} key 0 SecretKey
 {%- endfor %}
 !
 !
