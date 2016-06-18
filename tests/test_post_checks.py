@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
 #------------------------------------------------------
-# These are unit test like pre-checks/tests that will ensure
+# These are unit test like post-checks/tests that will ensure
 # - devices are in healthy state
-# - configs are generated correctly
 # - all OSPF neighbors are Up
 # - all BGP neighbors are Up
 #------------------------------------------------------
@@ -31,11 +30,6 @@ def loopbacks():
     conn.close()
     return loopback_ips
 
-@pytest.fixture(scope='session')
-def filenames():
-    files = glob.glob("../configs/*.txt")
-    return files
-
 
 @pytest.mark.parametrize("device", 
 			  loopbacks())
@@ -57,21 +51,6 @@ def test_bgp_neighbors_state_is_established(device):
     for neighbor in tasks.get_bgp_neighbors_state(device):
         if neighbor['peergroup'] == 'IBGP':
             assert neighbor['state'] == 'Established'
-
-@pytest.mark.parametrize("filename",
-			  filenames())
-def test_check_bgp_neighbors_in_configs_generated(filename):
-    """Check BGP neighbors configured in config """
-   
-    with open(filename) as f:
-        config = f.read()
-
-    # Identifying IBGP peers in generated config
-    PEER_RE = re.compile(r'neighbor (?P<peer>\S+) peer-group IBGP')
-    peers_in_config = { peer.group('peer') for peer in re.finditer(PEER_RE,config) }
-
-    #Assert number of IBGP peers on device = sum(leafs+spines-1)
-    assert len(peers_in_config) == 5
 
 @pytest.mark.parametrize("device",
 			 loopbacks())
