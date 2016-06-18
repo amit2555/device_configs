@@ -53,7 +53,7 @@ class Pod_Device(object):
 
     def replace_running_config(self,filename):
         failed_command, response = tasks.config_replace(self.loopback, 
-					os.path.abspath(filename))
+			"scp://amit:amit@10.1.1.50/{}".format(os.path.abspath(filename)))
         if not response:
             logger.info("\n==== Command failed: {} ====".format(failed_command))
             return False
