@@ -20,7 +20,7 @@ pods:
   interconnect_prefix: 10.0.0.0/24
   loopback_prefix: 10.0.1.0/24
   ospf:
-   cost: 1000
+   cost: 200
   bgp:
    neighbors:
     TOR1: 

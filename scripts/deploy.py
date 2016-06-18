@@ -59,7 +59,9 @@ class Pod_Device(object):
     def get_diff(self, filename):
         diffs = tasks.get_config_diff(self.loopback, "system:running-config", 
                       "scp://amit:amit@10.1.1.50/{}".format(os.path.abspath(filename)))
-        logger.info("\n {}".format(diffs))
+        
+        diff_output = ("\n").join(diffs)
+        logger.info("\n {}".format(diff_output))
         return None
 
 
