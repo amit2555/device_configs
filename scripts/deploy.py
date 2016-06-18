@@ -60,7 +60,7 @@ class Pod_Device(object):
         return True
 
     def get_diff(self, filename):
-        diffs = tasks.get_config_diff("system:running-config", 
+        diffs = tasks.get_config_diff(self.loopback, "system:running-config", 
                       "scp://amit:amit@10.1.1.50/{}".format(os.path.abspath(filename)))
         logger.info("\n {}".format(diffs))
         return None
@@ -75,7 +75,7 @@ def main():
 
     for device,filename in zip(devices,files):
         d = Pod_Device(device)
-        logger.info("\n==== {} ====.format(device.upper()")
+        logger.info("\n==== {} ====".format(device.upper())
 
         away_result = d.shift_traffic_away()
 
