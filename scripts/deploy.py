@@ -4,10 +4,12 @@
 # Python script used to deploy configuration to devices.
 # The script will -
 # 1. drain traffic from the device
-# 2. apply latest config to the device 
-# 3. restore traffic back onto the device
+# 2. get a diff
+# 3. apply latest config to the device 
+# 4. restore traffic back onto the device
 #-------------------------------------------------------
 
+import os
 import sys
 import glob
 import logging
@@ -49,34 +51,44 @@ class Pod_Device(object):
         response = shift_back(self.name,self.asn)
         return response
 
-    def apply_latest_config(self,filename):
-        with open(filename) as f:
-            commands = f.read().splitlines()
-
-        response = tasks.apply_config(self.loopback, commands)
+    def replace_running_config(self,filename):
+        failed_command, response = tasks.config_replace(self.loopback, 
+					os.path.abspath(filename))
         if not response:
+            logger.info("\n==== Command failed: {} ====".format(failed_command))
             return False
         return True
+
+    def get_diff(self, filename):
+        diffs = tasks.get_config_diff("system:running-config", 
+                      "scp://amit:amit@10.1.1.50/{}".format(os.path.abspath(filename)))
+        logger.info("\n {}".format(diffs))
+        return None
 
 
 def main():
 
     files = glob.glob("configs/*.txt")
 
-    # Get hostname from config file name
+    # Get hostnames from config file names
     devices = [ filename.split("/")[1].rstrip(".txt") for filename in files ]
 
     for device,filename in zip(devices,files):
         d = Pod_Device(device)
-        logger.info("==================================================")
+        logger.info("\n==== {} ====.format(device.upper()")
 
         away_result = d.shift_traffic_away()
 
         if away_result:
 
-            deploy_result = d.apply_latest_config(filename)
-            logger.info("Config applied to device {}".format(device))
+            logger.info("\n==== Generating diff between running-config and generated config ====")
+	    d.get_diff(filename)
 
+            logger.info("\n==== Replacing running-config with generated config ====")
+            deploy_result = d.replace_running_config(filename)
+            logger.info("\n==== Config applied to device {} ====".format(device))
+
+            logger.info("\n==== Restoring traffic back ====")
             back_result = d.shift_traffic_back()
 
             if not back_result:
