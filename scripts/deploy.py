@@ -75,7 +75,7 @@ def main():
 
     for device,filename in zip(devices,files):
         d = Pod_Device(device)
-        logger.info("\n==== {} ====".format(device.upper())
+        logger.info("\n==== {} ====".format(device.upper()))
 
         away_result = d.shift_traffic_away()
 
