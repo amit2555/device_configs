@@ -128,6 +128,7 @@ interface {{ member }}
 !
 router ospf 1
  max-metric router-lsa external-lsa include-stub summary-lsa
+ passive-interface GigabitEthernet0/0
 !
 router bgp {{ globals.asn }}
  bgp log-neighbor-changes
