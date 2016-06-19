@@ -87,45 +87,88 @@ class Pod_Device(object):
         for spine in self.pod.spines:
             prefix = self.pod.interconnect_subnets.pop(0)
             ip_addresses = list(netaddr.IPNetwork(prefix))
-            self.db.interconnects.update({"_id":str(ip_addresses[0])},{"_id":str(ip_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"a_end":self.device,"b_end":spine,"description":self.device + " to " + spine}, upsert=True)
-            self.db.interconnects.update({"_id":str(ip_addresses[1])},{"_id":str(ip_addresses[1]),"pod":self.pod.name,"site":self.pod.site,"a_end":spine,"b_end":self.device,"description":spine + " to " + self.device}, upsert=True)
+            self.db.interconnects.update({"_id":str(ip_addresses[0])},
+				         {"_id":str(ip_addresses[0]),
+					  "pod":self.pod.name,
+					  "site":self.pod.site,
+					  "a_end":self.device,
+					  "b_end":spine,
+					  "description":self.device + " to " + spine}, 
+					 upsert=True)
+            self.db.interconnects.update({"_id":str(ip_addresses[1])},
+					 {"_id":str(ip_addresses[1]),
+					  "pod":self.pod.name,
+					  "site":self.pod.site,
+					  "a_end":spine,
+					  "b_end":self.device,
+					  "description":spine + " to " + self.device}, 
+					 upsert=True)
 
         return None
 
 
     def _leaf_neighbor_interconnects(self):
         self.neighbors = defaultdict(dict)
-        leaf_downlinks = {3:'GigabitEthernet3/0',4:'GigabitEthernet4/0',5:'GigabitEthernet5/0',6:'GigabitEthernet6/0'}
+        leaf_downlinks = {3:'GigabitEthernet3/0',
+			  4:'GigabitEthernet4/0',
+			  5:'GigabitEthernet5/0',
+			  6:'GigabitEthernet6/0'}
 
-        if self.pod.vars['bgp']['neighbors']:
-            for neighbor,attributes in self.pod.vars['bgp']['neighbors'].iteritems():
+        try:
+            if self.pod.vars['bgp']:
+                for neighbor,attributes in self.pod.vars['bgp']['neighbors'].iteritems():
 
-                #Convert [1,2] to ['leaf1','leaf2']
-                leafs = [ 'leaf' + str(leaf_node) for leaf_node in attributes['leaf_nodes'] ]
+                    #Convert [1,2] to ['leaf1','leaf2']
+                    leafs = [ 'leaf' + str(leaf_node) for leaf_node in attributes['leaf_nodes'] ]
 
-                #Check if the device is listed in leafs
-                if self.device in leafs:    
-                    prefix = self.pod.interconnect_subnets.pop(-1)
-                    ip_addresses = list(netaddr.IPNetwork(prefix))
-                    self.db.interconnects.update({"_id":str(ip_addresses[0])},{"_id":str(ip_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"a_end":self.device,"b_end":neighbor,"description":self.device + " to " + neighbor}, upsert=True)
-                    self.db.interconnects.update({"_id":str(ip_addresses[1])},{"_id":str(ip_addresses[1]),"pod":self.pod.name,"site":self.pod.site,"a_end":neighbor,"b_end":self.device,"description":neighbor + " to " + self.device}, upsert=True)
+                    #Check if the device is listed in leafs
+                    if self.device in leafs:    
+                        prefix = self.pod.interconnect_subnets.pop(-1)
+                        ip_addresses = list(netaddr.IPNetwork(prefix))
+                        self.db.interconnects.update({"_id":str(ip_addresses[0])},
+				{"_id":str(ip_addresses[0]),
+				 "pod":self.pod.name,
+				 "site":self.pod.site,
+				 "a_end":self.device,
+				 "b_end":neighbor,
+				 "description":self.device + " to " + neighbor}, 
+				upsert=True)
+                        self.db.interconnects.update({"_id":str(ip_addresses[1])},
+						     {"_id":str(ip_addresses[1]),
+						      "pod":self.pod.name,
+						      "site":self.pod.site,
+						      "a_end":neighbor,
+						      "b_end":self.device,
+						      "description":neighbor + " to " + self.device}, 
+						     upsert=True)
 
-                    lag = attributes['lag']         
-                    asn = attributes['asn']         
-                    lag_members = list()
+                        lag = attributes['lag']         
+                        asn = attributes['asn']         
+                        lag_members = list()
 
-                    for interface in attributes['interfaces']:
-                        member = leaf_downlinks[interface]                       
-                        description = self.device + " to " + neighbor 
-                        lag_members.append((member,description)) 
-                    self.neighbors[neighbor] = { 'lag': lag, 'lag_members': lag_members, 'lag_ip': str(ip_addresses[0]),'asn':asn, 'remote_ip': str(ip_addresses[1])}
-         
-        return None
+                        for interface in attributes['interfaces']:
+                            member = leaf_downlinks[interface]                       
+                            description = self.device + " to " + neighbor 
+                            lag_members.append((member,description)) 
+                        self.neighbors[neighbor] = {'lag': lag, 
+						    'lag_members': lag_members, 
+						    'lag_ip': str(ip_addresses[0]),
+						    'asn':asn, 
+						    'remote_ip': str(ip_addresses[1])}
+
+	except KeyError:         
+            return None
 
  
     def _allocate_loopback(self):
         loopback_addresses = list(netaddr.IPNetwork(self.pod.loopback_subnets.pop(0)))   
-        self.db.loopbacks.update({"_id":str(loopback_addresses[0])},{"_id":str(loopback_addresses[0]),"pod":self.pod.name,"site":self.pod.site,"device_name":self.device,"family":"ios","hostname":self.hostname}, upsert=True)
+        self.db.loopbacks.update({"_id":str(loopback_addresses[0])},
+				 {"_id":str(loopback_addresses[0]),
+				  "pod":self.pod.name,
+				  "site":self.pod.site,
+				  "device_name":self.device,
+				  "family":"ios","hostname":self.hostname}, 
+				 upsert=True)
         return None
 
     def _assign_loopback(self):
