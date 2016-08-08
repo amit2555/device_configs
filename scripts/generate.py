@@ -10,7 +10,6 @@
 #
 #--------------------------------------------------
 
-import sys
 import argparse
 import jinja2
 import yaml
@@ -233,16 +232,16 @@ class Pod(object):
         self.oob_subnets.pop()
         return None
 
-def parse_arguments(args):
+def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p','--pod_name',required=True,help='Pod name eg. pod1')
     parser.add_argument('-y','--yaml_file',required=True,help='Variables filename')
-    results = parser.parse_args(args)
+    results = parser.parse_args()
     return results    
 
 
 def main():
-    args = parse_arguments(sys.argv[1:])
+    args = parse_arguments()
     yaml_file = args.yaml_file
     pod_name = args.pod_name.lower()
 
